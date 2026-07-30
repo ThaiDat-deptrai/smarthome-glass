@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>HomeKit – Trang chủ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 30%, #d4e6ff, #b8cff0);
+            padding: 20px 20px 100px;
+            display: flex;
+            justify-content: center;
+            transition: background 0.5s;
+            background-size: cover;
+            background-position: center;
+        }
+        :root {
+            --primary-color: #2c6bff;
+            --glass-opacity: 0.25;
+            --glass-blur: 18px;
+        }
+        .app-container {
+            max-width: 1200px; width: 100%;
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(var(--glass-blur, 18px));
+            -webkit-backdrop-filter: blur(var(--glass-blur, 18px));
+            border-radius: 56px;
+            padding: 30px 28px 35px;
+            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.4) inset;
+            transition: 0.3s;
+            position: relative;
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .header h1 { font-size: 32px; font-weight: 700; color: #1c2a4a; }
+        .header-actions { display: flex; gap: 20px; font-size: 22px; color: #2c3e6b; cursor: pointer; }
+        .section-title { font-size: 20px; font-weight: 600; color: #1c2a4a; margin: 20px 0 14px 6px; }
+
+        /* Quick scenes */
+        .quick-scenes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+        .scene-card {
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 18px 12px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.4);
+            cursor: pointer;
+            transition: 0.25s;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        }
+        .scene-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.45); }
+        .scene-card i { font-size: 28px; color: var(--primary-color); margin-bottom: 6px; display: block; }
+        .scene-card span { font-weight: 600; color: #1c2a4a; font-size: 16px; }
+
+        /* My scenes (from kichban) */
+        .my-scenes { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+        .my-scene-btn {
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 30px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1c2a4a;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .my-scene-btn:hover { background: rgba(255,255,255,0.45); transform: translateY(-2px); }
+        .my-scene-btn i { color: var(--primary-color); }
+
+        /* Rooms & devices */
+        .room-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+        .room-btn {
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 20px;
+            padding: 18px 12px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1c2a4a;
+            cursor: pointer;
+            transition: 0.25s;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .room-btn:hover { transform: translateY(-3px); background: rgba(255,255,255,0.45); }
+        .room-btn.active {
+            background: rgba(44, 107, 255, 0.25);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 20px rgba(44,107,255,0.15);
+        }
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 6px;
+        }
+        .device-card {
+            background: rgba(255,255,255, var(--glass-opacity));
+            backdrop-filter: blur(var(--glass-blur));
+            border-radius: 28px;
+            padding: 20px 18px 18px;
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            min-height: 150px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .device-card:hover { background: rgba(255,255,255,0.4); transform: translateY(-2px); }
+        .device-icon { font-size: 28px; color: #2c3e6b; margin-bottom: 8px; }
+        .device-name { font-size: 17px; font-weight: 600; color: #1c2a4a; }
+        .device-status { font-size: 14px; color: #4a5a7a; margin: 4px 0 12px; flex: 1; }
+        .toggle-wrapper { display: flex; justify-content: flex-end; margin-top: auto; }
+        .toggle {
+            width: 50px; height: 30px;
+            background: rgba(200,200,210,0.5);
+            border-radius: 30px;
+            position: relative;
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: 0.3s;
+            backdrop-filter: blur(4px);
+        }
+        .toggle.active {
+            background: var(--primary-color);
+            box-shadow: 0 0 24px var(--primary-color), 0 0 48px var(--primary-color);
+        }
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 24px; height: 24px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: 0.3s;
+        }
+        .toggle.active::after { left: 23px; }
+
+        /* Bottom nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 40px;
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+            user-select: none;
+            min-width: 300px;
+            justify-content: center;
+        }
+        .nav-item {
+            background: transparent;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1c2a4a;
+            transition: 0.2s;
+            background: rgba(255,255,255,0.1);
+            text-decoration: none;
+        }
+        .nav-item i { font-size: 20px; }
+        .nav-item span { font-size: 14px; }
+        .nav-item:hover { background: rgba(255,255,255,0.2); }
+        .nav-item.active { color: var(--primary-color); }
+
+        @media (max-width: 768px) {
+            .quick-scenes { grid-template-columns: repeat(2, 1fr); }
+            .room-grid { grid-template-columns: repeat(2, 1fr); }
+            .bottom-nav { min-width: unset; padding: 8px 12px; gap: 4px; }
+            .nav-item { padding: 8px 12px; font-size: 14px; }
+            .nav-item span { display: none; }
+            .nav-item i { font-size: 22px; }
+            .app-container { padding: 20px 16px 25px; }
+        }
+        @media (max-width: 480px) {
+            .device-grid { grid-template-columns: 1fr 1fr; }
+            .quick-scenes { grid-template-columns: 1fr 1fr; }
+            .room-grid { grid-template-columns: 1fr 1fr; }
+        }
+        .footer-note { margin-top: 30px; text-align: center; font-size: 13px; color: #4a5a7a; opacity: 0.7; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 18px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container" id="appContainer">
+    <header class="header">
+        <h1>Nhà của tôi</h1>
+        <div class="header-actions"><i class="fas fa-user-circle"></i></div>
+    </header>
+
+    <!-- QUICK SCENES (cố định) -->
+    <section class="quick-scenes">
+        <div class="scene-card" data-scene="movie"><i class="fas fa-film"></i><span>Xem phim</span></div>
+        <div class="scene-card" data-scene="sleep"><i class="fas fa-moon"></i><span>Đi ngủ</span></div>
+        <div class="scene-card" data-scene="leave"><i class="fas fa-door-open"></i><span>Rời nhà</span></div>
+        <div class="scene-card" data-scene="party"><i class="fas fa-glass-cheers"></i><span>Tiệc tùng</span></div>
+    </section>
+
+    <!-- KỊCH BẢN CỦA TÔI (từ kichban) -->
+    <section>
+        <h2 class="section-title">📋 Kịch bản của tôi</h2>
+        <div class="my-scenes" id="myScenesContainer"></div>
+    </section>
+
+    <!-- PHÒNG -->
+    <section class="rooms-section">
+        <h2 class="section-title">Phòng</h2>
+        <div class="room-grid" id="roomGrid">
+            <button class="room-btn" data-room="phong-ngu-1">Phòng ngủ 1</button>
+            <button class="room-btn" data-room="phong-ngu-2">Phòng ngủ 2</button>
+            <button class="room-btn" data-room="phong-trung-tam">Phòng trung tâm</button>
+            <button class="room-btn" data-room="phong-khach">Phòng khách</button>
+        </div>
+    </section>
+
+    <!-- THIẾT BỊ -->
+    <section class="devices-section">
+        <h2 class="section-title" id="roomTitle">Chọn một phòng</h2>
+        <div class="device-grid" id="deviceGrid"></div>
+    </section>
+
+    <div class="footer-note"><i class="fas fa-home"></i> Home Glass &bull; Đụt 09</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item active"><i class="fas fa-home"></i><span>Trang chủ</span></a>
+    <a href="nhietdo.html" class="nav-item"><i class="fas fa-thermometer-half"></i><span>Nhiệt độ</span></a>
+    <a href="kichban.html" class="nav-item"><i class="fas fa-magic"></i><span>Kịch bản</span></a>
+    <a href="troly.html" class="nav-item"><i class="fas fa-microphone"></i><span>Trợ lý</span></a>
+    <a href="caidat.html" class="nav-item"><i class="fas fa-cog"></i><span>Cài đặt</span></a>
+</nav>
+
+<script>
+(function() {
+    'use strict';
+
+    const roomDevices = {
+        'phong-ngu-1': [
+            { name: 'Đèn ngủ', icon: 'fa-lightbulb', status: 'Đang tắt', on: false, type: 'light' },
+            { name: 'Quạt', icon: 'fa-fan', status: 'Đang tắt', on: false, type: 'fan' }
+        ],
+        'phong-ngu-2': [
+            { name: 'Đèn học', icon: 'fa-lamp', status: 'Đang tắt', on: false, type: 'light' },
+            { name: 'Ổ cắm', icon: 'fa-plug', status: 'Đang tắt', on: false, type: 'plug' }
+        ],
+        'phong-trung-tam': [
+            { name: 'Đèn trần', icon: 'fa-lightbulb', status: 'Đang tắt', on: false, type: 'light' },
+            { name: 'Máy lạnh', icon: 'fa-snowflake', status: 'Đang tắt', on: false, type: 'ac' },
+            { name: 'TV', icon: 'fa-tv', status: 'Đang tắt', on: false, type: 'tv' }
+        ],
+        'phong-khach': [
+            { name: 'Đèn chùm', icon: 'fa-lightbulb', status: 'Đang tắt', on: false, type: 'light' },
+            { name: 'Quạt trần', icon: 'fa-fan', status: 'Đang tắt', on: false, type: 'fan' },
+            { name: 'Rèm cửa', icon: 'fa-wind', status: 'Đang tắt', on: false, type: 'curtain' }
+        ]
+    };
+
+    const roomGrid = document.getElementById('roomGrid');
+    const deviceGrid = document.getElementById('deviceGrid');
+    const roomTitle = document.getElementById('roomTitle');
+    const appContainer = document.getElementById('appContainer');
+
+    // Hàm cập nhật nền
+    function updateBackgroundFromStorage() {
+        const bg = localStorage.getItem('bgImage');
+        if (bg) {
+            document.body.style.backgroundImage = `url(${bg})`;
+            document.body.style.backgroundSize = 'cover';
+            document.body.style.backgroundPosition = 'center';
+        } else {
+            document.body.style.backgroundImage = '';
+            document.body.style.backgroundColor = '';
+            document.body.style.background = ''; // Reset về mặc định của CSS đã có
+        }
+    }
+
+    function loadSettings() {
+        const primary = localStorage.getItem('primaryColor');
+        if (primary) document.documentElement.style.setProperty('--primary-color', primary);
+        const glassOpacity = localStorage.getItem('glassOpacity');
+        if (glassOpacity) document.documentElement.style.setProperty('--glass-opacity', glassOpacity);
+        const glassBlur = localStorage.getItem('glassBlur');
+        if (glassBlur) document.documentElement.style.setProperty('--glass-blur', glassBlur + 'px');
+        
+        updateBackgroundFromStorage();
+
+        const darkMode = localStorage.getItem('darkMode') === 'true';
+        if (darkMode) {
+            document.body.style.backgroundColor = '#1a1a2e';
+            appContainer.style.background = 'rgba(0,0,0,0.4)';
+            appContainer.style.borderColor = 'rgba(255,255,255,0.1)';
+        } else {
+            document.body.style.backgroundColor = '';
+            appContainer.style.background = '';
+            appContainer.style.borderColor = '';
+        }
+    }
+    loadSettings();
+
+    // Lắng nghe thay đổi từ caidat.html (Đồng bộ thời gian thực)
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'bgImage') updateBackgroundFromStorage();
+        if (e.key === 'primaryColor') document.documentElement.style.setProperty('--primary-color', e.newValue);
+        if (e.key === 'glassBlur') document.documentElement.style.setProperty('--glass-blur', e.newValue + 'px');
+        if (e.key === 'glassOpacity') document.documentElement.style.setProperty('--glass-opacity', e.newValue);
+        if (e.key === 'darkMode') location.reload();
+    });
+
+    // Phần render thiết bị (Giữ nguyên logic của bạn)
+    function renderDevices(roomKey) {
+        const devices = roomDevices[roomKey];
+        if (!devices) { deviceGrid.innerHTML = '<p style="color:#4a5a7a;padding:20px;">Không có thiết bị.</p>'; return; }
+        let html = '';
+        devices.forEach((dev, index) => {
+            const statusText = dev.on ? 'Đang bật' : 'Đang tắt';
+            const toggleClass = dev.on ? 'active' : '';
+            html += `
+                <div class="device-card" data-device-index="${index}" data-room="${roomKey}">
+                    <div class="device-icon"><i class="fas ${dev.icon}"></i></div>
+                    <div class="device-name">${dev.name}</div>
+                    <div class="device-status">${statusText}</div>
+                    <div class="toggle-wrapper">
+                        <button class="toggle ${toggleClass}" data-index="${index}" data-room="${roomKey}"></button>
+                    </div>
+                </div>
+            `;
+        });
+        deviceGrid.innerHTML = html;
+        deviceGrid.querySelectorAll('.toggle').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const room = this.dataset.room;
+                const idx = parseInt(this.dataset.index);
+                const dev = roomDevices[room][idx];
+                dev.on = !dev.on;
+                renderDevices(room);
+                highlightRoom(room);
+                if (localStorage.getItem('soundEnabled') !== 'false') playClickSound();
+            });
+        });
+    }
+
+    function highlightRoom(roomKey) {
+        roomGrid.querySelectorAll('.room-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.room === roomKey);
+        });
+    }
+
+    function handleRoomClick(roomKey) {
+        const roomName = { 'phong-ngu-1': 'Phòng ngủ 1', 'phong-ngu-2': 'Phòng ngủ 2', 'phong-trung-tam': 'Phòng trung tâm', 'phong-khach': 'Phòng khách' }[roomKey] || roomKey;
+        roomTitle.textContent = roomName;
+        renderDevices(roomKey);
+        highlightRoom(roomKey);
+    }
+
+    roomGrid.querySelectorAll('.room-btn').forEach(btn => {
+        btn.addEventListener('click', function() { handleRoomClick(this.dataset.room); });
+    });
+
+    // Load phòng mặc định
+    const defaultRoom = 'phong-ngu-1';
+    const defaultBtn = roomGrid.querySelector(`.room-btn[data-room="${defaultRoom}"]`);
+    if (defaultBtn) { defaultBtn.classList.add('active'); handleRoomClick(defaultRoom); }
+
+    // Âm thanh, Toast, Quick Scenes, My Scenes... (Giữ nguyên vì không liên quan đến lỗi background)
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); color: white; padding: 14px 28px; border-radius: 40px; font-size: 16px; font-weight: 500; z-index: 9999; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: fadeInDown 0.4s ease;`;
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = '0.4s'; setTimeout(() => toast.remove(), 500); }, 2500);
+    }
+    function playClickSound() {
+        try { const audioCtx = new (window.AudioContext || window.webkitAudioContext)(); const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination); osc.frequency.value = 800; osc.type = 'sine'; gain.gain.value = 0.1; osc.start(); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05); osc.stop(audioCtx.currentTime + 0.05); } catch(e) {}
+    }
+    
+    // Load My Scenes
+    function loadMyScenes() {
+        const container = document.getElementById('myScenesContainer');
+        const scenes = JSON.parse(localStorage.getItem('scenes')) || [];
+        if (scenes.length === 0) { container.innerHTML = '<span style="color:#4a5a7a;font-size:14px;">Chưa có kịch bản.</span>'; return; }
+        container.innerHTML = '';
+        scenes.forEach((scene, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'my-scene-btn';
+            btn.innerHTML = `<i class="fas ${scene.icon || 'fa-film'}"></i> ${scene.name}`;
+            btn.dataset.index = index;
+            btn.addEventListener('click', function() {
+                const sceneObj = scenes[index];
+                sceneObj.devices.forEach(device => {
+                    for (let room in roomDevices) {
+                        const dev = roomDevices[room].find(d => d.name === device.name);
+                        if (dev) dev.on = device.state;
+                    }
+                });
+                const activeRoom = document.querySelector('.room-btn.active');
+                if (activeRoom) renderDevices(activeRoom.dataset.room);
+                showToast(`✅ Đã chạy "${sceneObj.name}"`);
+            });
+            container.appendChild(btn);
+        });
+    }
+    loadMyScenes();
+    window.addEventListener('storage', function(e) { if (e.key === 'scenes') loadMyScenes(); });
+
+    const styleAnim = document.createElement('style');
+    styleAnim.textContent = `@keyframes fadeInDown { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`;
+    document.head.appendChild(styleAnim);
+})();
+</script>
+</body>
+</html>
