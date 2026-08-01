@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomeKit – Trợ lý</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 30%, #d4e6ff, #b8cff0);
+            padding: 20px 20px 100px;
+            display: flex;
+            justify-content: center;
+            background-size: cover;
+            background-position: center;
+            transition: background 0.5s;
+        }
+        :root {
+            --primary-color: #2c6bff;
+            --glass-opacity: 0.25;
+            --glass-blur: 18px;
+        }
+        body.dark-mode .app-container,
+        body.dark-mode .header h1,
+        body.dark-mode .transcript-box,
+        body.dark-mode .footer-note,
+        body.dark-mode .nav-item {
+            color: #ffffff !important;
+        }
+        body.dark-mode .transcript-box {
+            background: rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .app-container {
+            max-width: 1200px; width: 100%;
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(var(--glass-blur, 18px));
+            border-radius: 56px;
+            padding: 30px 28px 35px;
+            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; }
+        .header h1 { font-size: 32px; font-weight: 700; color: #1c2a4a; }
+        .section-title { font-size: 20px; font-weight: 600; color: #1c2a4a; margin: 20px 0 14px 6px; }
+
+        .voice-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 0;
+        }
+        .voice-btn {
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: none;
+            box-shadow: 0 0 40px var(--primary-color);
+            font-size: 48px;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .voice-btn:hover { transform: scale(1.05); }
+        .voice-btn.listening {
+            animation: pulse 1.2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 var(--primary-color); }
+            70% { box-shadow: 0 0 0 30px rgba(44,107,255,0); }
+            100% { box-shadow: 0 0 0 0 rgba(44,107,255,0); }
+        }
+
+        .voice-wave {
+            display: none;
+            align-items: flex-end;
+            gap: 6px;
+            height: 80px;
+            margin: 30px 0;
+        }
+        .voice-wave.active { display: flex; }
+        .wave-bar {
+            width: 8px;
+            height: 10px;
+            background: var(--primary-color);
+            border-radius: 10px;
+            animation: waveAnim 0.6s ease-in-out infinite alternate;
+        }
+        .wave-bar:nth-child(odd) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3n) { animation-duration: 0.8s; }
+        @keyframes waveAnim {
+            0% { height: 10px; }
+            100% { height: 60px; }
+        }
+
+        .transcript-box {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(8px);
+            border-radius: 30px;
+            padding: 20px 30px;
+            width: 100%;
+            max-width: 500px;
+            min-height: 80px;
+            font-size: 18px;
+            color: #1c2a4a;
+            border: 1px solid rgba(255,255,255,0.3);
+            margin-top: 20px;
+            text-align: center;
+            transition: color 0.3s;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+            user-select: none;
+            min-width: 300px;
+            justify-content: center;
+        }
+        .nav-item {
+            background: transparent;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1c2a4a;
+            transition: 0.2s;
+            background: rgba(255,255,255,0.1);
+            text-decoration: none;
+        }
+        .nav-item i { font-size: 20px; }
+        .nav-item span { font-size: 14px; }
+        .nav-item:hover { background: rgba(255,255,255,0.2); }
+        .nav-item.active { color: var(--primary-color); }
+
+        @media (max-width: 768px) {
+            .bottom-nav { min-width: unset; padding: 8px 12px; gap: 4px; }
+            .nav-item { padding: 8px 12px; font-size: 14px; }
+            .nav-item span { display: none; }
+            .nav-item i { font-size: 22px; }
+        }
+        .footer-note { margin-top: 30px; text-align: center; font-size: 13px; color: #4a5a7a; opacity: 0.7; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 18px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header class="header">
+        <h1>🎤 Trợ lý</h1>
+        <div class="header-actions"><i class="fas fa-volume-up"></i></div>
+    </header>
+
+    <section class="voice-area">
+        <button class="voice-btn" id="voiceBtn"><i class="fas fa-microphone"></i></button>
+        <div class="voice-wave" id="voiceWave">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        </div>
+        <div class="transcript-box" id="transcriptBox">Nhấn vào micro để nói lệnh</div>
+    </section>
+
+    <div class="footer-note"><i class="fas fa-microphone-alt"></i> Điều khiển bằng giọng nói</div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>Trang chủ</span></a>
+    <a href="nhietdo.html" class="nav-item"><i class="fas fa-thermometer-half"></i><span>Nhiệt độ</span></a>
+    <a href="kichban.html" class="nav-item"><i class="fas fa-magic"></i><span>Kịch bản</span></a>
+    <a href="troly.html" class="nav-item active"><i class="fas fa-microphone"></i><span>Trợ lý</span></a>
+    <a href="caidat.html" class="nav-item"><i class="fas fa-cog"></i><span>Cài đặt</span></a>
+</nav>
+
+<script>
+(function() {
+    'use strict';
+
+    // ===== Cấu hình =====
+    const CONFIG = {
+        lang: 'vi-VN',
+        continuous: false,
+        interimResults: true,
+    };
+
+    // ===== DOM =====
+    const voiceBtn = document.getElementById('voiceBtn');
+    const voiceWave = document.getElementById('voiceWave');
+    const transcriptBox = document.getElementById('transcriptBox');
+
+    // ===== Trạng thái =====
+    let recognition = null;
+    let isListening = false;
+
+    // ===== Hỗ trợ đọc văn bản =====
+    function speak(text) {
+        if (localStorage.getItem('voiceFeedback') === 'false') return;
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = CONFIG.lang;
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // ===== Hiển thị transcript =====
+    function setTranscript(text, isError = false) {
+        transcriptBox.textContent = text;
+        transcriptBox.style.color = isError ? '#d32f2f' : '#1c2a4a';
+    }
+
+    // ===== Khởi tạo Speech Recognition =====
+    function initRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            setTranscript('⚠️ Trình duyệt không hỗ trợ nhận dạng giọng nói.', true);
+            voiceBtn.disabled = true;
+            voiceBtn.style.opacity = '0.5';
+            return null;
+        }
+
+        const rec = new SpeechRecognition();
+        rec.lang = CONFIG.lang;
+        rec.continuous = CONFIG.continuous;
+        rec.interimResults = CONFIG.interimResults;
+
+        rec.onstart = function() {
+            isListening = true;
+            voiceBtn.classList.add('listening');
+            voiceWave.classList.add('active');
+            setTranscript('🎧 Đang lắng nghe...');
+        };
+
+        rec.onerror = function(event) {
+            console.error('Lỗi nhận dạng:', event.error);
+            let msg = '❌ ';
+            switch (event.error) {
+                case 'not-allowed':
+                    msg += 'Không được phép truy cập micro. Vui lòng cấp quyền và thử lại.';
+                    break;
+                case 'no-speech':
+                    msg += 'Không phát hiện giọng nói. Hãy thử lại.';
+                    break;
+                case 'audio-capture':
+                    msg += 'Không thể bắt âm thanh. Kiểm tra micro.';
+                    break;
+                case 'network':
+                    msg += 'Lỗi mạng. Kiểm tra kết nối.';
+                    break;
+                default:
+                    msg += event.error;
+            }
+            setTranscript(msg, true);
+            // Không tự động reset trạng thái, người dùng có thể bấm lại
+        };
+
+        rec.onend = function() {
+            isListening = false;
+            voiceBtn.classList.remove('listening');
+            voiceWave.classList.remove('active');
+            if (transcriptBox.textContent === '🎧 Đang lắng nghe...') {
+                setTranscript('Nhấn vào micro để nói lệnh');
+            }
+        };
+
+        rec.onresult = function(event) {
+            let final = '';
+            let interim = '';
+            for (let i = 0; i < event.results.length; i++) {
+                const result = event.results[i];
+                if (result.isFinal) {
+                    final += result[0].transcript;
+                } else {
+                    interim += result[0].transcript;
+                }
+            }
+            const text = final || interim;
+            if (text.trim() === '') {
+                setTranscript('😶 Không nghe thấy gì');
+                return;
+            }
+            setTranscript(`🗣️ "${text}"`);
+            if (final) {
+                processVoiceCommand(final.toLowerCase());
+                try {
+                    rec.stop();
+                } catch (e) { /* bỏ qua */ }
+            }
+        };
+
+        return rec;
+    }
+
+    // ===== Xử lý lệnh =====
+    function processVoiceCommand(text) {
+        let response = '';
+
+        // Lệnh mẫu – bạn có thể mở rộng tuỳ ý
+        if (text.includes('bật đèn')) {
+            if (text.includes('phòng khách')) response = 'Đã bật đèn phòng khách';
+            else if (text.includes('phòng ngủ')) response = 'Đã bật đèn phòng ngủ';
+            else response = 'Đã bật đèn';
+        } else if (text.includes('tắt đèn')) {
+            if (text.includes('phòng khách')) response = 'Đã tắt đèn phòng khách';
+            else if (text.includes('phòng ngủ')) response = 'Đã tắt đèn phòng ngủ';
+            else response = 'Đã tắt đèn';
+        } else if (text.includes('nhiệt độ')) {
+            response = 'Nhiệt độ hiện tại là 24°C';
+        } else if (text.includes('kịch bản xem phim') || text.includes('xem phim')) {
+            response = 'Đã kích hoạt kịch bản Xem phim';
+        } else if (text.includes('kịch bản ngủ') || text.includes('ngủ')) {
+            response = 'Đã kích hoạt kịch bản Ngủ';
+        } else if (text.includes('bật nhạc') || text.includes('nhạc')) {
+            response = 'Đang phát nhạc';
+        } else if (text.includes('tắt nhạc') || text.includes('dừng nhạc')) {
+            response = 'Đã tắt nhạc';
+        } else if (text.includes('xin chào') || text.includes('chào')) {
+            response = 'Xin chào! Tôi là trợ lý ảo.';
+        } else if (text.includes('bạn tên gì') || text.includes('tên bạn')) {
+            response = 'Tôi là trợ lý ảo HomeKit.';
+        } else if (text.includes('cảm ơn')) {
+            response = 'Không có gì!';
+        } else {
+            response = 'Tôi chưa hiểu lệnh của bạn. Hãy thử lại.';
+        }
+
+        setTranscript(`🤖 ${response}`);
+        speak(response);
+    }
+
+    // ===== Tải cài đặt =====
+    function loadSettings() {
+        const primary = localStorage.getItem('primaryColor');
+        if (primary) document.documentElement.style.setProperty('--primary-color', primary);
+        const glassOpacity = localStorage.getItem('glassOpacity');
+        if (glassOpacity) document.documentElement.style.setProperty('--glass-opacity', glassOpacity);
+        const glassBlur = localStorage.getItem('glassBlur');
+        if (glassBlur) document.documentElement.style.setProperty('--glass-blur', glassBlur + 'px');
+        const bg = localStorage.getItem('bgImage');
+        if (bg) {
+            document.body.style.backgroundImage = `url(${bg})`;
+            document.body.style.backgroundSize = 'cover';
+            document.body.style.backgroundPosition = 'center';
+        } else {
+            document.body.style.background = 'radial-gradient(circle at 20% 30%, #d4e6ff, #b8cff0)';
+        }
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.body.style.background = '#1a1a2e';
+            document.querySelector('.app-container').style.background = 'rgba(0,0,0,0.4)';
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+    }
+
+    // ===== Khởi tạo =====
+    function init() {
+        loadSettings();
+        recognition = initRecognition();
+        if (!recognition) return;
+
+        voiceBtn.addEventListener('click', function() {
+            if (isListening) {
+                try { recognition.stop(); } catch (e) {}
+                return;
+            }
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error('Cannot start:', e);
+                setTranscript('❌ Không thể bắt đầu nhận dạng. Vui lòng thử lại.', true);
+                isListening = false;
+                voiceBtn.classList.remove('listening');
+                voiceWave.classList.remove('active');
+            }
+        });
+
+        // Phím Space để kích hoạt (tiện lợi)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === ' ' && e.target === document.body) {
+                e.preventDefault();
+                voiceBtn.click();
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+})();
+</script>
+</body>
+</html> 
